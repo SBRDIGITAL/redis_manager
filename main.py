@@ -25,14 +25,14 @@ class RedisManager:
     def __init__(self, client: Redis):
         self.redis = client
         
-    def save_if_not_exists(self, key: str, data) -> None:
-        """ Сохраняет данные в Redis, если их нет, с временем кеширования 30 секунд. """
+    def save_if_not_exists(self, key: str, data, exp_time: int) -> None:
+        """ Сохраняет данные в Redis, если их нет, с временем кеширования в `exp_time` секунд. """
         if not self.redis.exists(key):
             # Преобразуем данные в JSON, если это словарь
-            if isinstance(data, dict):
+            if isinstance(data, (dict, list,)):
                 data = json.dumps(data)
             # Сохраняем данные в Redis
-            self.redis.set(key, data, ex=30)  # ex=30 устанавливает время жизни в 30 секунд
+            self.redis.set(key, data, ex=exp_time)  # ex=30 устанавливает время жизни в 30 секунд
             print(f"Данные сохранены под ключом '{key}'.")
         else:
             print(f"Данные с ключом '{key}' уже существуют в Redis.")
@@ -45,6 +45,7 @@ class RedisManager:
                 # Проверяем, является ли данные строкой JSON
                 try:
                     data = json.loads(data)  # Преобразуем обратно в словарь, если это JSON
+                    return data
                 except json.JSONDecodeError:
                     pass  # Если не JSON, оставляем как есть
                 print(f"Данные по ключу '{key}': {data}")
